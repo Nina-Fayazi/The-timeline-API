@@ -1,10 +1,16 @@
 const db = require('../config/database');
 
-
 exports.getAllCommentsPost = async (req, res) => {
-    const { id } = req.params;
+    const { id } = req.params; 
     try {
-        const [comments] = await db.query('SELECT * FROM comments WHERE message_id = ? ORDER BY created_at ASC', [id]);
+        const [comments] = await db.query(`
+            SELECT comments.*, users.first_name, users.last_name 
+            FROM comments 
+            JOIN users ON comments.user_id = users.id 
+            WHERE comments.message_id = ? 
+            ORDER BY comments.created_at ASC
+        `, [id]);
+        
         return res.status(200).json(comments);
     } catch (error) {
         return res.status(500).json({ message: "Error fetching comments", error: error.message });

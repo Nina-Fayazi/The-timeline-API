@@ -1,9 +1,15 @@
 const db = require('../config/database'); 
 
 
+
 exports.getAllPosts = async (req, res) => {
     try {
-        const [posts] = await db.query('SELECT * FROM messages ORDER BY created_at DESC');
+        const [posts] = await db.query(`
+            SELECT messages.*, users.first_name, users.last_name 
+            FROM messages 
+            JOIN users ON messages.user_id = users.id 
+            ORDER BY messages.created_at DESC
+        `);
         return res.status(200).json(posts);
     } catch (error) {
         return res.status(500).json({ message: "Error fetching posts", error: error.message });
