@@ -1,16 +1,13 @@
-const db = require('../config/database');
+const Comment = require('../models/Comment');
+
 
 exports.getAllCommentsPost = async (req, res) => {
-    const { id } = req.params; 
+    const { id } = req.params; // آیدی پست
+
     try {
-        const [comments] = await db.query(`
-            SELECT comments.*, users.first_name, users.last_name 
-            FROM comments 
-            JOIN users ON comments.user_id = users.id 
-            WHERE comments.message_id = ? 
-            ORDER BY comments.created_at ASC
-        `, [id]);
-        
+        const comments = await Comment.find({ message_id: id })
+            .populate('user_id', 'first_name last_name')
+            .sort({ createdAt: 1 }); // قدیمی‌ترین اول نشان داده شود
         return res.status(200).json(comments);
     } catch (error) {
         return res.status(500).json({ message: "Error fetching comments", error: error.message });
@@ -19,19 +16,16 @@ exports.getAllCommentsPost = async (req, res) => {
 
 
 exports.postOneComment = async (req, res) => {
-    const { id } = req.params;
-    const { comment, user_id } = req.body;
+    const { id } = req.params; 
+    const { comment } = req.body;
+    const user_id = req.user.id;
 
-    if (!comment || !user_id) {
-        return res.status(400).json({ message: "Comment content and user_id are required." });
-    }
+    if (!comment) return res.status(400).json({ message: "Comment content is required." });
 
     try {
-        const [result] = await db.query(
-            'INSERT INTO comments (message_id, user_id, comment, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())',
-            [id, user_id, comment]
-        );
-        return res.status(201).json({ message: "Comment posted successfully", commentId: result.insertId });
+        const newComment = new Comment({ message_id: id, user_id, comment });
+        await newComment.save();
+        return res.status(201).json({ message: "Comment posted successfully", comment: newComment });
     } catch (error) {
         return res.status(500).json({ message: "Error posting comment", error: error.message });
     }

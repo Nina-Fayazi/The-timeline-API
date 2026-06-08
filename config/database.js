@@ -1,10 +1,15 @@
-const mysql = require('mysql2');
+const mongoose = require('mongoose');
 
-const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',         
-    password: '',          
-    database: 'timeline_db' 
-});
+const MONGO_URI = 'mongodb://localhost:27000/timeline_db'; 
 
-module.exports = pool.promise();
+const connectDB = async () => {
+    try {
+        await mongoose.connect(MONGO_URI);
+        console.log("✅ MongoDB Connected successfully...");
+    } catch (error) {
+        console.error("❌ MongoDB connection error:", error.message);
+        process.exit(1);
+    }
+};
+
+module.exports = connectDB;
